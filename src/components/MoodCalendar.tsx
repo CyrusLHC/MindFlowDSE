@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { useLanguage } from '../lib/language-context';
 import { useUser } from '../lib/user-context';
@@ -25,7 +25,7 @@ const moods = [
 
 // Generate sample moods for past days
 const generateSampleMoods = () => {
-  const sampleMoods: { [key: string]: typeof moods[0] } = {};
+  const sampleMoods: { [key: string]: typeof moods[0][] } = {};
   const today = new Date();
   
   // Add moods for the past 20 days (with some days empty)
@@ -36,8 +36,14 @@ const generateSampleMoods = () => {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
     const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-    const randomMood = moods[Math.floor(Math.random() * moods.length)];
-    sampleMoods[key] = randomMood;
+    // Generate 1-3 random moods for each day (allowing duplicates)
+    const numMoods = Math.floor(Math.random() * 3) + 1;
+    const dayMoods: typeof moods[0][] = [];
+    for (let j = 0; j < numMoods; j++) {
+      const randomMood = moods[Math.floor(Math.random() * moods.length)];
+      dayMoods.push(randomMood);
+    }
+    sampleMoods[key] = dayMoods;
   }
   
   return sampleMoods;
@@ -45,8 +51,10 @@ const generateSampleMoods = () => {
 
 export function MoodCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedMoods, setSelectedMoods] = useState<{ [key: string]: typeof moods[0] }>({});
+  const [selectedMoods, setSelectedMoods] = useState<{ [key: string]: typeof moods[0][] }>({});
   const [showMoodPicker, setShowMoodPicker] = useState(false);
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
+  const [showDayMoodsPopup, setShowDayMoodsPopup] = useState(false);
   const { t } = useLanguage();
   const { user } = useUser();
   
@@ -76,12 +84,33 @@ export function MoodCalendar() {
   };
 
   const handleMoodSelect = (mood: typeof moods[0]) => {
-    setSelectedMoods({ ...selectedMoods, [todayKey]: mood });
-    setShowMoodPicker(false);
+    const currentDayMoods = selectedMoods[todayKey] || [];
+    // Always add the mood (allow duplicates)
+    setSelectedMoods({
+      ...selectedMoods,
+      [todayKey]: [...currentDayMoods, mood],
+    });
+    // Don't close the picker automatically - allow multiple selections
+  };
+
+  const handleRemoveMood = (index: number) => {
+    const currentDayMoods = selectedMoods[todayKey] || [];
+    const updatedMoods = currentDayMoods.filter((_, idx) => idx !== index);
+    setSelectedMoods({
+      ...selectedMoods,
+      [todayKey]: updatedMoods,
+    });
   };
 
   const getDayKey = (day: number) => {
     return `${currentDate.getFullYear()}-${currentDate.getMonth()}-${day}`;
+  };
+
+  const handleDayClick = (dayKey: string, dayMoods: typeof moods[0][]) => {
+    if (dayMoods.length > 0) {
+      setSelectedDayKey(dayKey);
+      setShowDayMoodsPopup(true);
+    }
   };
 
   return (
@@ -139,7 +168,7 @@ export function MoodCalendar() {
             const day = idx + 1;
             const dayKey = getDayKey(day);
             const isToday = dayKey === todayKey;
-            const mood = selectedMoods[dayKey];
+            const dayMoods = selectedMoods[dayKey] || [];
 
             return (
               <motion.div
@@ -147,19 +176,28 @@ export function MoodCalendar() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: idx * 0.01 }}
+                onClick={() => handleDayClick(dayKey, dayMoods)}
                 className={`aspect-square rounded-xl border-2 p-2 flex flex-col items-center justify-center ${
                   isToday ? 'border-purple-400 bg-purple-50' : 'border-gray-200'
-                }`}
+                } ${dayMoods.length > 0 ? 'cursor-pointer hover:bg-gray-50 transition-colors' : ''}`}
               >
                 <div className="text-xs text-gray-600">{day}</div>
-                {mood && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="text-2xl"
-                  >
-                    {mood.emoji}
-                  </motion.div>
+                {dayMoods.length > 0 && (
+                  <div className="flex items-center justify-center gap-1 mt-1">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="text-xl"
+                      title={t(dayMoods[0].zh, dayMoods[0].en)}
+                    >
+                      {dayMoods[0].emoji}
+                    </motion.div>
+                    {dayMoods.length > 1 && (
+                      <div className="text-xs text-gray-500 font-medium">
+                        +{dayMoods.length - 1}
+                      </div>
+                    )}
+                  </div>
                 )}
               </motion.div>
             );
@@ -203,23 +241,139 @@ export function MoodCalendar() {
               className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 p-6 max-h-[70vh] overflow-y-auto"
             >
               <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
-              <h3 className="text-center mb-6">{t('選擇你的心情', 'Choose Your Mood')}</h3>
-              <div className="grid grid-cols-3 gap-4">
-                {moods.map((mood, idx) => (
-                  <motion.button
-                    key={mood.id}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: idx * 0.05 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => handleMoodSelect(mood)}
-                    className={`${mood.color} rounded-2xl p-4 flex flex-col items-center gap-2 hover:scale-105 transition-transform`}
-                  >
-                    <div className="text-4xl">{mood.emoji}</div>
-                    <div className="text-sm">{t(mood.zh, mood.en)}</div>
-                  </motion.button>
-                ))}
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold">{t('選擇你的心情', 'Choose Your Mood')}</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowMoodPicker(false)}
+                >
+                  {t('完成', 'Done')}
+                </Button>
               </div>
+              {selectedMoods[todayKey] && selectedMoods[todayKey].length > 0 && (
+                <div className="mb-4 p-3 bg-purple-50 rounded-xl">
+                  <div className="text-sm text-gray-600 mb-2">
+                    {t('已選擇', 'Selected')}: {selectedMoods[todayKey].length}
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-2 scroll-smooth" style={{ scrollbarWidth: 'thin' }}>
+                    <div className="flex gap-2 min-w-max">
+                      {selectedMoods[todayKey].map((mood, idx) => (
+                        <motion.button
+                          key={`${mood.id}-${idx}`}
+                          initial={{ scale: 0.9, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleRemoveMood(idx)}
+                          className={`${mood.color} rounded-lg px-3 py-1 flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer shrink-0`}
+                          title={t('點擊刪除', 'Click to remove')}
+                        >
+                          <span className="text-lg">{mood.emoji}</span>
+                          <span className="text-xs whitespace-nowrap">{t(mood.zh, mood.en)}</span>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-4">
+                {moods.map((mood, idx) => {
+                  const currentDayMoods = selectedMoods[todayKey] || [];
+                  const moodCount = currentDayMoods.filter(m => m.id === mood.id).length;
+                  
+                  return (
+                    <motion.button
+                      key={mood.id}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: idx * 0.05 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleMoodSelect(mood)}
+                      className={`${mood.color} rounded-2xl p-4 flex flex-col items-center gap-2 hover:scale-105 transition-transform relative ${
+                        moodCount > 0 ? 'ring-4 ring-purple-400 ring-offset-2' : ''
+                      }`}
+                    >
+                      {moodCount > 0 && (
+                        <div className="absolute top-1 right-1 bg-purple-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                          {moodCount > 9 ? '9+' : moodCount}
+                        </div>
+                      )}
+                      <div className="text-4xl">{mood.emoji}</div>
+                      <div className="text-sm">{t(mood.zh, mood.en)}</div>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Day Moods Popup */}
+      <AnimatePresence>
+        {showDayMoodsPopup && selectedDayKey && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowDayMoodsPopup(false);
+                setSelectedDayKey(null);
+              }}
+              className="fixed inset-0 bg-black/50 z-40"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25 }}
+              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl z-50 p-6 max-w-md w-[90vw] max-h-[60vh] overflow-y-auto shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold">
+                  {selectedDayKey === todayKey 
+                    ? t('今天的心情', 'Today\'s Moods')
+                    : t('選擇的心情', 'Selected Moods')}
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setShowDayMoodsPopup(false);
+                    setSelectedDayKey(null);
+                  }}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              {selectedMoods[selectedDayKey] && selectedMoods[selectedDayKey].length > 0 ? (
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-600 mb-3">
+                    {t('共', 'Total')}: {selectedMoods[selectedDayKey].length} {t('個心情', 'moods')}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedMoods[selectedDayKey].map((mood, idx) => (
+                      <motion.div
+                        key={`${mood.id}-${idx}`}
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className={`${mood.color} rounded-xl p-4 flex flex-col items-center gap-2`}
+                      >
+                        <div className="text-4xl">{mood.emoji}</div>
+                        <div className="text-sm font-medium">{t(mood.zh, mood.en)}</div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-gray-400 py-8">
+                  {t('沒有記錄心情', 'No moods recorded')}
+                </div>
+              )}
             </motion.div>
           </>
         )}

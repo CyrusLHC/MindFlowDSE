@@ -7,16 +7,12 @@ import { useUser, Voucher } from '../lib/user-context';
 import { toast } from 'sonner@2.0.3';
 
 const rewards = [
-  { id: 1, zh: '星巴克咖啡券', en: 'Starbucks Coffee Voucher', points: 150, icon: '☕', available: 10, color: 'from-green-400 to-emerald-400' },
-  { id: 2, zh: '書店折扣券', en: 'Bookstore Discount', points: 100, icon: '📚', available: 20, color: 'from-blue-400 to-cyan-400' },
-  { id: 3, zh: '電影票優惠', en: 'Movie Ticket Discount', points: 200, icon: '🎬', available: 15, color: 'from-purple-400 to-pink-400' },
-  { id: 4, zh: '文具套裝', en: 'Stationery Set', points: 120, icon: '✏️', available: 25, color: 'from-yellow-400 to-orange-400' },
-  { id: 5, zh: '運動用品折扣', en: 'Sports Equipment Discount', points: 180, icon: '⚽', available: 12, color: 'from-red-400 to-pink-400' },
-  { id: 6, zh: '快餐店餐券', en: 'Fast Food Voucher', points: 80, icon: '🍔', available: 30, color: 'from-orange-400 to-red-400' },
-  { id: 7, zh: '音樂串流月費', en: 'Music Streaming Subscription', points: 250, icon: '🎵', available: 8, color: 'from-pink-400 to-purple-400' },
-  { id: 8, zh: '手機配件折扣', en: 'Phone Accessories Discount', points: 150, icon: '📱', available: 18, color: 'from-gray-400 to-slate-400' },
-  { id: 9, zh: '甜品店優惠券', en: 'Dessert Shop Voucher', points: 90, icon: '🍰', available: 22, color: 'from-pink-400 to-red-400' },
-  { id: 10, zh: '藝術用品折扣', en: 'Art Supplies Discount', points: 130, icon: '🎨', available: 15, color: 'from-purple-400 to-blue-400' },
+  { id: 1, zh: '星巴克咖啡券', en: 'Starbucks Coffee Voucher', points: 250, icon: '☕', available: 50, color: 'from-green-400 to-emerald-400' },
+  { id: 2, zh: '書店折扣券', en: 'Bookstore Discount', points: 200, icon: '📚', available: 50, color: 'from-blue-400 to-cyan-400' },
+  { id: 3, zh: '文具套裝', en: 'Stationery Set', points: 250, icon: '✏️', available: 50, color: 'from-yellow-400 to-orange-400' },
+  { id: 4, zh: '與導師資諮詢服務（15分鐘）', en: 'Consultation with Teacher (15 minutes)', points: 700, icon: '👨‍🏫', available: 30, color: 'from-red-400 to-pink-400' },
+  { id: 5, zh: '與導師資諮詢服務（30分鐘）', en: 'Consultation with Teacher (30 minutes)', points: 1000, icon: '👨‍🏫', available: 30, color: 'from-orange-400 to-red-400' },
+  { id: 6, zh: '與導師資諮詢服務（60分鐘）', en: 'Consultation with Teacher (60 minutes)', points: 1500, icon: '👨‍🏫', available: 30, color: 'from-pink-400 to-purple-400' },
 ];
 
 export function RewardsShop() {
