@@ -74,6 +74,16 @@ export function SettingsMenu({ isOpen, onClose }: SettingsMenuProps) {
                     <span className="text-gray-600">{t('角色', 'Role')}</span>
                     <span>{t(user?.role === 'student' ? '學生' : '家長', user?.role === 'student' ? 'Student' : 'Parent')}</span>
                   </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-gray-600">{t('訂閱計劃', 'Subscription Plan')}</span>
+                    <span className="font-medium">
+                      {user?.subscriptionPlan === 'free' 
+                        ? t('免費', 'Free')
+                        : user?.subscriptionPlan === 'lv1'
+                        ? 'Lv1'
+                        : 'Lv2'}
+                    </span>
+                  </div>
                 </div>
               </motion.div>
 

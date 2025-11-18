@@ -14,6 +14,7 @@ interface UserData {
   name: string;
   points: number;
   vouchers: Voucher[];
+  subscriptionPlan: 'free' | 'lv1' | 'lv2';
 }
 
 interface UserContextType {
@@ -23,6 +24,7 @@ interface UserContextType {
   addPoints: (points: number) => void;
   deductPoints: (points: number) => void;
   addVoucher: (voucher: Voucher) => void;
+  updateSubscription: (plan: 'lv1' | 'lv2') => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -38,6 +40,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       name,
       points: 500, // Starting points
       vouchers: [],
+      subscriptionPlan: 'free',
     });
   };
 
@@ -57,8 +60,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(prev => prev ? { ...prev, vouchers: [...prev.vouchers, voucher] } : null);
   };
 
+  const updateSubscription = (plan: 'lv1' | 'lv2') => {
+    setUser(prev => prev ? { ...prev, subscriptionPlan: plan } : null);
+  };
+
   return (
-    <UserContext.Provider value={{ user, login, logout, addPoints, deductPoints, addVoucher }}>
+    <UserContext.Provider value={{ user, login, logout, addPoints, deductPoints, addVoucher, updateSubscription }}>
       {children}
     </UserContext.Provider>
   );

@@ -10,6 +10,7 @@ import { GroupDiscussion } from './components/GroupDiscussion';
 import { DailyRelax } from './components/DailyRelax';
 import { RewardsShop } from './components/RewardsShop';
 import { ChatBot } from './components/ChatBot';
+import { PremiumSubscription } from './components/PremiumSubscription';
 import { SettingsMenu } from './components/SettingsMenu';
 import { Button } from './components/ui/button';
 import { Toaster } from './components/ui/sonner';
@@ -136,6 +137,9 @@ function AppContent() {
           })}
         </div>
       </motion.div>
+
+      {/* Premium Subscription */}
+      {user.role === 'student' && <PremiumSubscription />}
 
       {/* Chat Bot */}
       {user.role === 'student' && <ChatBot />}
